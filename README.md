@@ -1,10 +1,11 @@
-# Selective Prediction-Project
+# Selective Prediction on VQA
 
 
 
 ## References:
 
-https://github.com/geifmany/selective_deep_learning
++ https://github.com/geifmany/selective_deep_learning \
++ https://huggingface.co/datasets/HuggingFaceM4/VQAv2/blob/main/VQAv2.py
 
 ### Citations:
   ```bibtex
