@@ -11,8 +11,9 @@ def get_VQAv2_dataset():
         dataset = load_dataset('VQAv2.py', data_dir=folder_path, name='v2')
     else:
         print(f"Downloading from source")    
-        dataset = load_dataset('VQAv2.py', name='v2')
-    
+        from download_VQAv2_dataset import download_dataset
+        dataset = download_dataset(folder_path)
+        
     return dataset
 
 
