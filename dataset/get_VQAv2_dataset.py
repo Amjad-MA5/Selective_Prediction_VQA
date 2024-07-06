@@ -1,4 +1,4 @@
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
 import os
 
 home_dir = "/teamspace/studios/this_studio"
@@ -11,7 +11,7 @@ def get_VQAv2_dataset():
     print(folder_path)
     if os.path.isdir(folder_path):
         print(f"Loading from local path {folder_path}.")
-        dataset = load_dataset(script_path, data_dir=folder_path, name='v2')
+        dataset = load_from_disk(folder_path)
     else:
         print(f"Downloading from source")
         try:
