@@ -1,31 +1,63 @@
 from transformers import ViltProcessor, ViltForQuestionAnswering
-import requests
-from PIL import Image
 import torch
+from PIL import Image
+import requests
+from io import BytesIO
 
-def vilt_vqa_prediction_with_probability_score(image_path, question):
-    # Load a pre-trained VQA model and processor
-    processor = ViltProcessor.from_pretrained("dandelin/vilt-b32-finetuned-vqa")
-    model = ViltForQuestionAnswering.from_pretrained("dandelin/vilt-b32-finetuned-vqa")
+class ViltVQA:
+    def __init__(self):
+        self.processor = ViltProcessor.from_pretrained("dandelin/vilt-b32-finetuned-vqa")
+        self.model = ViltForQuestionAnswering.from_pretrained("dandelin/vilt-b32-finetuned-vqa")
 
-    image = Image.open(requests.get(image_path, stream=True).raw)
-    encoding = processor(text= question, images=image, return_tensors="pt")
+    def predict(self, image_input, question):
+        # Load image if image_input is a URL or file path
+        if isinstance(image_input, str):
+            if image_input.startswith('http'):
+                response = requests.get(image_input)
+                image = Image.open(BytesIO(response.content)).convert("RGB")
+            else:
+                image = Image.open(image_input).convert("RGB")
+        else:
+            # Assume image_input is already a PIL image object
+            image = image_input
 
-    outputs = model(**encoding)
-    logits = outputs.logits
+        # Ensure image is in RGB mode
+        if image.mode != 'RGB':
+            image = image.convert("RGB")
 
-    probs = torch.softmax(logits, dim=1)
-    max_prob, predicted_class = torch.max(probs, dim=1)
+        # Process the image and the question
+        inputs = self.processor(images=image, text=question, return_tensors="pt", padding=True)
 
-    predicted_answer = model.config.id2label[predicted_class.item()]
+        # Forward pass
+        with torch.no_grad():
+            outputs = self.model(**inputs)
+            logits = outputs.logits
+            answer = self.processor.tokenizer.decode(logits.argmax(-1))
 
-    return predicted_answer, max_prob.item()
+        # Get confidence score
+        confidence = torch.softmax(logits, dim=-1).max().item()
+        return answer, confidence
 
-image_path = "https://prod-images-static.radiopaedia.org/images/9289883/1c20962e46c92ee83a3f551adb24fa_big_gallery.jpg"
-question = "Which part of the body is in the picture?"
-
-answer, confidence = vilt_vqa_prediction_with_probability_score(image_path, question)
-print(f"Answer: {answer}, Confidence: {confidence:.2f}")
-
-
-
+def predict_with_selection(vqa_model, dataset, threshold=0.5):
+    results = []
+    for example in dataset:
+        image_path = example["image"]
+        question = example["question"]
+        answer, confidence = vqa_model.predict(image_path, question)
+        if confidence >= threshold:
+            results.append({
+                "image_id": example["image_id"],
+                "question_id": example["question_id"],
+                "question": question,
+                "answer": answer,
+                "confidence": confidence
+            })
+        else:
+            results.append({
+                "image_id": example["image_id"],
+                "question_id": example["question_id"],
+                "question": question,
+                "answer": "Prediction confidence too low",
+                "confidence": confidence
+            })
+    return results

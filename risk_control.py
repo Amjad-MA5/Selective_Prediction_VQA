@@ -6,7 +6,7 @@ import math
 from scipy.optimize import fsolve
 import random
 
-class risk_control:
+class RiskControl:
 
     def calculate_bound(self,delta,m,erm):
         #This function is a solver for the inverse of binomial CDF based on binary search.
