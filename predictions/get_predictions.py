@@ -2,7 +2,8 @@
 This code will provide logits and labels for calibration
 '''
 from transformers import ViltProcessor, ViltForQuestionAnswering
-
+import json
+import torch
 import sys
 sys.path.append("/teamspace/studios/this_studio/Selective_Prediction_PathVQA")
 
@@ -29,6 +30,15 @@ def answers_to_labels(answers, config):
     return labels
         
         
+def save_logits_n_label(logits, labels, batch_no):
+    data = {}
+    data['logits'] = logits
+    data['labels'] = labels
+    file_name = "Logits_and_labels"+ str(batch_no) +  ".json"
+    folder = "/teamspace/studios/this_studio/Selective_Prediction_PathVQA/predictions/logits_and_labels/"
+    with open(folder + file_name, "w") as f:
+        json.dump(data, f)
+
     
 
 def prediction(model, processor, dataset):
@@ -39,6 +49,8 @@ def prediction(model, processor, dataset):
     """
     logits_accumulated = []
     labels_accumulated = []
+    batch_size = 100
+    batch_no = 0
     for data in dataset:
         image = data['image']
         text = data['question']
@@ -52,11 +64,12 @@ def prediction(model, processor, dataset):
         logits_accumulated.append(logits)
         
         labels_accumulated.append(answers_to_labels(data['answers'], model.config))
-    return logits_accumulated, labels_accumulated
+        if len(labels_accumulated) >= batch_size:
+            save_logits_n_label(logits_accumulated, labels_accumulated, batch_no)
+            batch_no += 1
+            logits_accumulated = []
+            labels_accumulated = []
+    if len(labels_accumulated) != 0  :
+        save_logits_n_label(logits_accumulated, labels_accumulated, batch_no)
+    return
 
-def save_logits_n_label(logits, labels):
-    data = {}
-    data['logits'] = logits
-    data['labels'] = labels
-    with open("Logits_and_labels.json", "w") as f:
-        json.dump(data, f)
