@@ -34,10 +34,10 @@ def save_logits_n_label(logits, labels, batch_no):
     data = {}
     data['logits'] = logits
     data['labels'] = labels
-    file_name = "Logits_and_labels"+ str(batch_no) +  ".json"
+    file_name = "Logits_and_labels"+ str(batch_no) +  ".pt"
     folder = "/teamspace/studios/this_studio/Selective_Prediction_PathVQA/predictions/logits_and_labels/"
-    with open(folder + file_name, "w") as f:
-        json.dump(data, f)
+    torch.save(data, folder+file_name)
+    print("Saved data for batch no:", batch_no )
 
     
 
@@ -57,12 +57,12 @@ def prediction(model, processor, dataset):
         encoding = processor(image, text, return_tensors="pt")
 
         # forward pass
-        outputs = model(**encoding)
-        logits = outputs.logits
-        idx = logits.argmax(-1).item()
-        # print("Predicted answer:", model.config.id2label[idx])
-        logits_accumulated.append(logits)
-        
+        with torch.no_grad():
+            outputs = model(**encoding)
+            logits = outputs.logits
+            # idx = logits.argmax(-1).item()
+            # print("Predicted answer:", model.config.id2label[idx])
+            logits_accumulated.append(logits.detach().numpy())
         labels_accumulated.append(answers_to_labels(data['answers'], model.config))
         if len(labels_accumulated) >= batch_size:
             save_logits_n_label(logits_accumulated, labels_accumulated, batch_no)
