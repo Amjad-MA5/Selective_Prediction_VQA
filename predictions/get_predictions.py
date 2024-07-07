@@ -41,7 +41,7 @@ def save_logits_n_label(logits, labels, batch_no):
 
     
 
-def prediction(model, processor, dataset):
+def prediction(model, processor, dataset, device ='cpu'):
     """
         Input: VQA model 
         dataset : dataset to generate logits 
@@ -51,24 +51,30 @@ def prediction(model, processor, dataset):
     labels_accumulated = []
     batch_size = 100
     batch_no = 0
+    # dataloader = DataLoader(dataset, batch_size=32, shuffle=False, num_workers=4)
+    
     for data in dataset:
-        image = data['image']
-        text = data['question']
-        encoding = processor(image, text, return_tensors="pt")
-
-        # forward pass
-        with torch.no_grad():
-            outputs = model(**encoding)
-            logits = outputs.logits
-            # idx = logits.argmax(-1).item()
-            # print("Predicted answer:", model.config.id2label[idx])
-            logits_accumulated.append(logits.detach().numpy())
-        labels_accumulated.append(answers_to_labels(data['answers'], model.config))
-        if len(labels_accumulated) >= batch_size:
-            save_logits_n_label(logits_accumulated, labels_accumulated, batch_no)
-            batch_no += 1
-            logits_accumulated = []
-            labels_accumulated = []
+        try:
+            image = data['image']
+            text = data['question']
+            encoding = processor(image, text, return_tensors="pt")
+            encoding.to(device)
+            # forward pass
+            with torch.no_grad():
+                outputs = model(**encoding)
+                logits = outputs.logits
+                # idx = logits.argmax(-1).item()
+                # print("Predicted answer:", model.config.id2label[idx])
+                logits_accumulated.append(logits.cpu().detach().numpy())
+            labels_accumulated.append(answers_to_labels(data['answers'], model.config))
+            if len(labels_accumulated) >= batch_size:
+                save_logits_n_label(logits_accumulated, labels_accumulated, batch_no)
+                batch_no += 1
+                logits_accumulated = []
+                labels_accumulated = []
+        except Exception as e:
+            print(e)
+    
     if len(labels_accumulated) != 0  :
         save_logits_n_label(logits_accumulated, labels_accumulated, batch_no)
     return
