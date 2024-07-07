@@ -330,7 +330,7 @@ class VectorScaling:
             )
         loss_accumulate.append(after_temperature_nll)
         ece_accumulate.append(after_temperature_ece)
-    return (loss_accumulate, ece_accumulate)
+        return (loss_accumulate, ece_accumulate)
             
 
     def calibrate(self, logits, eps=1e-12):
