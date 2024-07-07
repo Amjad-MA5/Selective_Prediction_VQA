@@ -2,10 +2,13 @@ from datasets import load_dataset, load_from_disk
 import os
 
 home_dir = "/teamspace/studios/this_studio"
-folder_path =  home_dir + "/Selective_Prediction_PathVQA/dataset/data/VQAv2.hf"
-script_path = home_dir + "/Selective_Prediction_PathVQA/dataset/VQAv2.py"
+folder_path =  home_dir + "/Selective_Prediction_PathVQA/dataset/data/VQAv2c.hf"
+
 
 # Ensure the dataset script file is in your PYTHONPATH or specify the path to the script
+from datasets import load_dataset
+
+
 
 def get_VQAv2_dataset():
     print(folder_path)
@@ -14,11 +17,8 @@ def get_VQAv2_dataset():
         dataset = load_from_disk(folder_path)
     else:
         print(f"Downloading from source")
-        try:
-            from download_VQAv2_dataset import download_dataset
-        except:
-            pass
-        dataset = download_dataset(folder_path)
+        dataset = load_dataset("lmms-lab/VQAv2")
+        dataset.save_to_disk(folder_path)
         
     return dataset
 
