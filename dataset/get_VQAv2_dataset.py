@@ -2,7 +2,7 @@ from datasets import load_dataset, load_from_disk
 import os
 
 home_dir = "/teamspace/studios/this_studio"
-folder_path =  home_dir + "/Selective_Prediction_PathVQA/dataset/data/VQAv2c.hf"
+folder_path =  home_dir + "/Selective_Prediction_VQA/dataset/data/VQAv2c.hf"
 
 
 # Ensure the dataset script file is in your PYTHONPATH or specify the path to the script

@@ -5,7 +5,7 @@ from transformers import ViltProcessor, ViltForQuestionAnswering
 import json
 import torch
 import sys
-sys.path.append("/teamspace/studios/this_studio/Selective_Prediction_PathVQA")
+sys.path.append("/teamspace/studios/this_studio/Selective_Prediction_VQA")
 
 def get_model():
     """
@@ -35,7 +35,7 @@ def save_logits_n_label(logits, labels, batch_no):
     data['logits'] = logits
     data['labels'] = labels
     file_name = "Logits_and_labels"+ str(batch_no) +  ".pt"
-    folder = "/teamspace/studios/this_studio/Selective_Prediction_PathVQA/predictions/logits_and_labels/"
+    folder = "/teamspace/studios/this_studio/Selective_Prediction_VQA/predictions/logits_and_labels/"
     torch.save(data, folder+file_name)
     print("Saved data for batch no:", batch_no )
 
