@@ -1,3 +1,5 @@
+#reference: https://github.com/geifmany/selective_deep_learning/tree/master
+
 import pickle
 import numpy as np
 from scipy.stats import binom
