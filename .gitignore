@@ -1,3 +1,0 @@
-dataset/data/**
-!/dataset/data
-__pycache__/
