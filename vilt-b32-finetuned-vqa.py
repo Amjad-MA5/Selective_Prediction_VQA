@@ -1,8 +1,6 @@
 from transformers import ViltProcessor, ViltForQuestionAnswering
 import torch
 from PIL import Image
-import requests
-from io import BytesIO
 import numpy as np
 
 class ViltVQA:
@@ -10,52 +8,56 @@ class ViltVQA:
         self.processor = ViltProcessor.from_pretrained("dandelin/vilt-b32-finetuned-vqa")
         self.model = ViltForQuestionAnswering.from_pretrained("dandelin/vilt-b32-finetuned-vqa")
 
+        self.processor.feature_extractor.do_rescale = False
+
     def predict(self, images, questions):
-        # Process the images and questions
         inputs = self.processor(images=images, text=questions, return_tensors="pt", padding=True)
+        outputs = self.model(**inputs)
+        logits = outputs.logits
+        probabilities = torch.softmax(logits, dim=-1)
 
-        # Forward pass
-        with torch.no_grad():
-            outputs = self.model(**inputs)
-            logits = outputs.logits
+        # Debugging: Log the shape and some sample logits
+        print(f"Logits shape: {logits.shape}")
+        #print(f"Sample logits: {logits[:5]}")
+        #print(f"Sample probabilities: {probabilities[:5]}")
 
-        # Calculate probabilities and get confidence scores
-        probs = torch.softmax(logits, dim=-1).cpu().numpy()
-        answer_idxs = np.argmax(probs, axis=1)
-        confidences = np.max(probs, axis=1)
-        answers = [self.processor.tokenizer.decode([idx]) for idx in answer_idxs]
+        return probabilities.detach().cpu().numpy()
 
-        return answers, confidences, probs
-
-def predict_with_selection(vqa_model, dataloader, threshold=0.5):
-    results = []
+def predict_with_selection(vqa_model, dataloader, threshold=0.2):
     all_predictions = []
+    results = []
+
     for batch in dataloader:
-        image_paths = batch["image"]
-        questions = batch["question"]
+        images = batch['images'].to('cuda')
+        questions = batch['questions']
+        question_ids = batch['question_ids']
 
-        images = [Image.open(image_path).convert("RGB") for image_path in image_paths]
+        probabilities = vqa_model.predict(images, questions)
+        all_predictions.append(probabilities)
 
-        answers, confidences, probs = vqa_model.predict(images, questions)
-        all_predictions.append(probs)
+        for i in range(len(probabilities)):
+            max_prob = np.max(probabilities[i])
+            answer_index = np.argmax(probabilities[i])
+            answer = vqa_model.model.config.id2label[answer_index]
 
-        for i, (answer, confidence) in enumerate(zip(answers, confidences)):
-            if confidence >= threshold:
-                results.append({
-                    "image_id": batch["image_id"][i],
-                    "question_id": batch["question_id"][i],
+            if max_prob < threshold:
+                answer = 'Prediction confidence too low'
+            
+            results.append({
+                    "image_id": batch["image_ids"][i],
+                    "question_id": batch["question_ids"][i],
                     "question": questions[i],
                     "answer": answer,
-                    "confidence": confidence
-                })
-            else:
-                results.append({
-                    "image_id": batch["image_id"][i],
-                    "question_id": batch["question_id"][i],
-                    "question": questions[i],
-                    "answer": "Prediction confidence too low",
-                    "confidence": confidence
-                })
+                    "confidence": max_prob
+            })
+            print(f"Question ID: {question_ids[i]}, Confidence: {max_prob}")
 
     all_predictions = np.concatenate(all_predictions, axis=0)
+    print(f"All predictions shape: {all_predictions.shape}")
+
+    # Debugging: Print the number of confident results
+    num_confident_results = sum(1 for result in results if result['confidence'] >= threshold)
+    print(f"Number of confident results: {num_confident_results}")
+
+
     return results, all_predictions

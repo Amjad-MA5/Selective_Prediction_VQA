@@ -69,8 +69,16 @@ class RiskControl:
             theta = probs[probs_idx_sorted[mid]]
             risk = sum(FY[probs_idx_sorted[mid:]])/mi
             if split:
-                testrisk = sum(FY_val[probs_val>=theta])/len(FY_val[probs_val>=theta])
-                testcov = len(FY_val[probs_val>=theta])/len(FY_val)
+                if len(FY_val[probs_val>=theta])>0:
+                    testrisk = sum(FY_val[probs_val>=theta])/len(FY_val[probs_val>=theta])
+                else:
+                    print("Warning: No elements in probs_val are greater than or equal to theta.")
+                    testrisk = 0
+                if len(FY_val) > 0:     
+                    testcov = len(FY_val[probs_val>=theta])/len(FY_val)
+                else:
+                    print("Warning: No elements in probs_val are greater than or equal to theta.")
+                    testcov = 0
             bound = self.calculate_bound(deltahat,mi,risk)
             coverage = mi/m
             if bound>rstar:
