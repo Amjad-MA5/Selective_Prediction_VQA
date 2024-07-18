@@ -17,6 +17,17 @@ def get_model():
 
 
 def answers_to_labels(answers, config):
+     """
+    Converts answers to corresponding labels using the model's config.
+
+    Args:
+        answers (list): A list of answer annotations.
+        config: The model configuration containing the label2id mapping.
+
+    Returns:
+        list: A list of labels corresponding to the answers.
+    """
+    
     labels = []
     AnyAnswer = False
     for annotation in answers:
@@ -31,6 +42,18 @@ def answers_to_labels(answers, config):
         
         
 def save_logits_n_label(logits, labels, batch_no):
+
+    """
+    Saves the logits and labels to a file.
+
+    Args:
+        logits (list): A list of logits.
+        labels (list): A list of labels.
+        batch_no (int): The batch number to be used in the file name.
+
+    The data is saved in a specified folder with the filename containing the batch number.
+    """
+    
     data = {}
     data['logits'] = logits
     data['labels'] = labels
