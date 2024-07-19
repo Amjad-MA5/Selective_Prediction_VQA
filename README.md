@@ -48,7 +48,7 @@ Execute Selective_Prediction_VQA/risk_bounds/compute_risk_bounds.ipynb
 | 0.30         | 0.2446     | 1.0000         | 0.2453    | 1.0000        | 0.2497       |
 | 1.00         | 0.2461     | 1.0000         | 0.2437    | 1.0000        | 0.2513       |
 
-**For more details please the  [report](report/MAI_Project_Report_GroupE.pdf)**
+**For more details, please read the [report](report/MAI_Project_Report_GroupE.pdf) :smiley:**
 
 ## References:
 
